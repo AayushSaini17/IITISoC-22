@@ -46,7 +46,6 @@ sudo ~/catkin_ws/src/mavros/mavros/scripts/install_geographiclib_datasets.sh
 4. Clone IQ Simulation ROS package
 
 cd ~/catkin_ws/src
-git clone https://github.com/Intelligent-Quads/iq_sim.git
 
 Our repository should now be copied to ~/catkin_ws/src/iq_sim/ (don't run this line. This is just saying that if you browse in the file manager, you will see those folders).
 
