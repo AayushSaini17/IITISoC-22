@@ -1,0 +1,113 @@
+#! /usr/bin/env python
+# Import ROS.
+import rospy
+# Import LaserScan message from package sensor_msgs.
+from sensor_msgs.msg import LaserScan
+# Import the API.
+from iq_gnc.py_gnc_functions import *
+# Import the needed math functions.
+from iq_gnc.rectangle import *
+import math
+# Importing Point message from package geometry_msgs.
+from geometry_msgs.msg import Point
+
+# Create an object for the API and making it a global variable.
+drone = gnc_api()
+r2d=float(math.pi/180)
+
+
+def laser_cb(msg):
+    # Callback function of the subscriber.
+    cr_scan = LaserScan()
+    cr_scan = msg
+    avoid = False
+    for i in range(math.floor(88*r2d/cr_scan.angle_increment),math.floor(92*r2d/cr_scan.angle_increment)):
+        l = 15
+        if cr_scan.ranges[i] < l:
+            avoid = True
+            drone.set_speed(0.01)
+            break
+
+    
+
+    if avoid:
+        list1=[]
+        for k in range(math.floor(90*r2d/cr_scan.angle_increment),math.floor(180*r2d/cr_scan.angle_increment)):
+            if cr_scan.ranges[k]<15:
+                list1.append(cr_scan.ranges[k])
+            else:
+                break
+        list2=[]
+        for t in range(0,math.floor(90*r2d/cr_scan.angle_increment)):
+            if cr_scan.ranges[math.floor(90*r2d/cr_scan.angle_increment)-t]<15:
+              list2.append(cr_scan.ranges[math.floor(90*r2d/cr_scan.angle_increment)-t])
+            else:
+               break
+        right=False
+        left=False
+        if list1[len(list1)-1]>list2[len(list2)-1]:
+           right=True
+        else:
+           left=True
+ 
+        avoided=False
+        cur_pose = Point()
+        if right:
+            drone.initialize_local_frame()
+            drone.set_destination(x=list2[len(list2)-1]*math.cos(math.pi/2-len(list2)*cr_scan.angle_increment)+1,y=list2[len(list2)-1]*math.sin(math.pi/2-len(list2)*cr_scan.angle_increment)+1,z=0,psi=0)
+            rospy.sleep(list2[len(list2)-1]+1)
+            lq=int(0)
+            lp=int(0)
+            while lp<1:
+               if cr_scan.ranges[math.floor(math.pi/cr_scan.angle_increment)]<3:
+                   drone.initialize_local_frame()
+                   drone.set_speed(1)
+                   drone.set_destination(x=0,y=lq,z=0,psi=0)
+                   lq=lq+2
+               else:
+                    avoided=True
+                    break
+        elif left:
+            drone.initialize_local_frame()
+            drone.set_speed(1)
+            drone.set_destination(x=-list1[len(list1)-1]*math.cos(math.pi/2-len(list1)*cr_scan.angle_increment)-1,y=list1[len(list1)-1]*math.sin(math.pi/2-len(list1)*cr_scan.angle_increment)+1,z=0,psi=0)
+            rospy.sleep(list2[len(list2)-1]+1)
+            q=int(0)
+            lp=int(0)
+            while lp<1:
+                if cr_scan.ranges[0]<3:
+                   drone.initialize_local_frame()
+                   drone.set_destination(x=0,y=q,z=0,psi=0)
+                   q=q+2
+                else:
+                   avoided=True
+                   break
+
+ 
+
+def main():
+    # Initializing the ROS node.
+    rospy.init_node("obs_avoider", anonymous=True)
+    # Creating a subscriber for the topic '/spur/laser/scan'.
+    rospy.Subscriber(name="/spur/laser/scan",
+                     data_class=LaserScan,
+                     queue_size=1,
+                     callback=laser_cb)
+
+
+    # Wait for FCU connection.
+    drone.wait4connect()
+    # Wait for the mode to be switched.
+    drone.wait4start()
+    # Create local reference frame.
+    
+
+    # Used to keep the node running.
+    rospy.spin()
+
+
+if __name__ == '__main__':
+    try:
+        main()
+    except KeyboardInterrupt:
+        exit()
