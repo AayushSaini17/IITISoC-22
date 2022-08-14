@@ -319,6 +319,6 @@ if __name__ == '__main__':
     except KeyboardInterrupt:
         exit()
         
-#Link of the demonstration vedio
+# Link of the demonstration vedio
 
 https://drive.google.com/file/d/1X2NHQ1RkdBcuFMDrjGt16V-P1sxjAm6j/view?usp=sharing
