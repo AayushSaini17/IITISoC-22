@@ -22,7 +22,7 @@ def laser_cb(msg):
     cr_scan = msg
     avoid = False
     for i in range(math.floor(88*r2d/cr_scan.angle_increment),math.floor(92*r2d/cr_scan.angle_increment)):
-        l = 15
+        l = 20
         if cr_scan.ranges[i] < l:
             avoid = True
             drone.set_speed(0.01)
@@ -33,13 +33,13 @@ def laser_cb(msg):
     if avoid:
         list1=[]
         for k in range(math.floor(90*r2d/cr_scan.angle_increment),math.floor(180*r2d/cr_scan.angle_increment)):
-            if cr_scan.ranges[k]<15:
+            if cr_scan.ranges[k]<20:
                 list1.append(cr_scan.ranges[k])
             else:
                 break
         list2=[]
         for t in range(0,math.floor(90*r2d/cr_scan.angle_increment)):
-            if cr_scan.ranges[math.floor(90*r2d/cr_scan.angle_increment)-t]<15:
+            if cr_scan.ranges[math.floor(90*r2d/cr_scan.angle_increment)-t]<20:
               list2.append(cr_scan.ranges[math.floor(90*r2d/cr_scan.angle_increment)-t])
             else:
                break
@@ -56,32 +56,52 @@ def laser_cb(msg):
             drone.initialize_local_frame()
             drone.set_destination(x=list2[len(list2)-1]*math.cos(math.pi/2-len(list2)*cr_scan.angle_increment)+1,y=list2[len(list2)-1]*math.sin(math.pi/2-len(list2)*cr_scan.angle_increment)+1,z=0,psi=0)
             rospy.sleep(list2[len(list2)-1]+1)
-            lq=int(0)
-            lp=int(0)
-            while lp<1:
-               if cr_scan.ranges[math.floor(math.pi/cr_scan.angle_increment)]<3:
-                   drone.initialize_local_frame()
-                   drone.set_speed(1)
-                   drone.set_destination(x=0,y=lq,z=0,psi=0)
-                   lq=lq+2
-               else:
-                    avoided=True
-                    break
+            rospy.Subscriber(name="/spur/laser/scan",
+                     data_class=LaserScan,
+                     queue_size=1,
+                     callback=r)
         elif left:
             drone.initialize_local_frame()
             drone.set_speed(1)
             drone.set_destination(x=-list1[len(list1)-1]*math.cos(math.pi/2-len(list1)*cr_scan.angle_increment)-1,y=list1[len(list1)-1]*math.sin(math.pi/2-len(list1)*cr_scan.angle_increment)+1,z=0,psi=0)
             rospy.sleep(list2[len(list2)-1]+1)
-            q=int(0)
-            lp=int(0)
-            while lp<1:
-                if cr_scan.ranges[0]<3:
-                   drone.initialize_local_frame()
-                   drone.set_destination(x=0,y=q,z=0,psi=0)
-                   q=q+2
-                else:
-                   avoided=True
-                   break
+            rospy.Subscriber(name="/spur/laser/scan",
+                     data_class=LaserScan,
+                     queue_size=1,
+                     callback=l)  
+
+
+
+def r(msg):
+    # Callback function of the subscriber.
+    cr_scan = LaserScan()
+    cr_scan = msg
+    lq=int(0)
+    lp=int(0)
+    while lp<1:
+        if cr_scan.ranges[math.floor(math.pi/cr_scan.angle_increment)]<3:
+            drone.initialize_local_frame()
+            drone.set_speed(1)
+            drone.set_destination(x=0,y=lq,z=0,psi=0)
+            rospy.sleep(2)
+            lq=lq+2
+        else:
+            break
+def l(msg):
+    # Callback function of the subscriber.
+    cr_scan = LaserScan()
+    cr_scan = msg
+    q=int(0)
+    lp=int(0)
+    while lp<1:
+        if cr_scan.ranges[0]<3:
+            drone.initialize_local_frame()
+            drone.set_destination(x=0,y=q,z=0,psi=0)
+            rospy.sleep(2)
+            q=q+2
+        else:
+            break
+
 
  
 
@@ -100,7 +120,7 @@ def main():
     # Wait for the mode to be switched.
     drone.wait4start()
     # Create local reference frame.
-    
+ 
 
     # Used to keep the node running.
     rospy.spin()
