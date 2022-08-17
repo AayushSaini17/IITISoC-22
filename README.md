@@ -213,20 +213,13 @@ if __name__ == '__main__':
 # FOR OBSTACLE REPEL
 
 #! /usr/bin/env python
-# Import ROS.
 import rospy
-# Import LaserScan message from package sensor_msgs.
 from sensor_msgs.msg import LaserScan
-# Import the API.
 from iq_gnc.py_gnc_functions import *
-# Import the needed math functions.
 from math import cos, sin, pow, radians, sqrt
-# Importing Point message from package geometry_msgs.
 from geometry_msgs.msg import Point
 
-# Create an object for the API and making it a global variable.
 drone = gnc_api()
-
 
 def laser_cb(msg):
     # Callback function of the subscriber.
